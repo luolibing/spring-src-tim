@@ -16,18 +16,17 @@
 
 package org.springframework.beans.factory.xml;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.util.xml.XmlValidationModeDetector;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 
-import org.springframework.util.xml.XmlValidationModeDetector;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Spring's default {@link DocumentLoader} implementation.
@@ -63,6 +62,12 @@ public class DefaultDocumentLoader implements DocumentLoader {
 	/**
 	 * Load the {@link Document} at the supplied {@link InputSource} using the standard JAXP-configured
 	 * XML parser.
+	 *
+	 * EntityResolver的作用：
+	 * 验证XML的时候一般需要验证文档，例如DTD或者XSD，而这些文件默认需要到网上进行下载，而如果临时下载，极有可能因为网络原因导致下载失败，从而验证失败
+	 * 最好的方式是将验证文件放在本地，这样的话就不需要进行下载，直接在本地文件系统上查找即可，这样用户体验可用性都得到了提高。
+	 *
+	 *
 	 */
 	@Override
 	public Document loadDocument(InputSource inputSource, EntityResolver entityResolver,
@@ -72,7 +77,9 @@ public class DefaultDocumentLoader implements DocumentLoader {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Using JAXP provider [" + factory.getClass().getName() + "]");
 		}
+		// 这个地方使用了DelegatingEntityResolver代理进行加载。
 		DocumentBuilder builder = createDocumentBuilder(factory, entityResolver, errorHandler);
+		// 接下来就是SAX解析的工作了。
 		return builder.parse(inputSource);
 	}
 

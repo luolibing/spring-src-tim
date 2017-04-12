@@ -16,13 +16,12 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.io.IOException;
-
+import org.springframework.util.Assert;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import org.springframework.util.Assert;
+import java.io.IOException;
 
 /**
  * {@link EntityResolver} implementation that delegates to a {@link BeansDtdResolver}
@@ -79,6 +78,16 @@ public class DelegatingEntityResolver implements EntityResolver {
 	@Override
 	public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
 		if (systemId != null) {
+			/**
+			 * <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN 2.0//EN"
+			 "http://www.springframework.org/dtd/spring-beans-2.0.dtd">
+			 * publicId为"-//SPRING//DTD BEAN 2.0//EN"
+			 * SystemId为http://www.springframework.org/dtd/spring-beans-2.0.dtd
+			 *
+			 * 如果后缀名以.dtd结束，则使用dtdResolver进行查找DTD, 否则使用SchemaResolver.
+			 * 直接使用ClassPathResource加载对应的配置文件。
+			 *
+			 */
 			if (systemId.endsWith(DTD_SUFFIX)) {
 				return this.dtdResolver.resolveEntity(publicId, systemId);
 			}

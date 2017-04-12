@@ -16,13 +16,6 @@
 
 package org.springframework.beans.factory.support;
 
-import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.springframework.beans.BeanMetadataAttributeAccessor;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -34,6 +27,9 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 /**
  * Base class for concrete, full-fledged
@@ -134,56 +130,80 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 */
 	public static final String INFER_METHOD = "(inferred)";
 
-
+	// Bean的class属性
 	private volatile Object beanClass;
 
+	// 域，包括singleton, prototype
 	private String scope = SCOPE_DEFAULT;
 
+	// 是否为抽象类
 	private boolean abstractFlag = false;
 
+	// 是否懒加载
 	private boolean lazyInit = false;
 
+	// 注入模式
 	private int autowireMode = AUTOWIRE_NO;
 
+	// 依赖验证
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
+	// 依赖的类
 	private String[] dependsOn;
 
+	// 自动注入候选人
 	private boolean autowireCandidate = true;
 
+	// 是否是主类
 	private boolean primary = false;
 
+	// 优先注入候选Bean
 	private final Map<String, AutowireCandidateQualifier> qualifiers =
 			new LinkedHashMap<String, AutowireCandidateQualifier>(0);
 
+	// 是否允许访问非公开的构造器和方法
 	private boolean nonPublicAccessAllowed = true;
 
+	// 是否已宽松的模式解析构造函数，在同参数父子类参数中解析非宽松的会抛出错误。
 	private boolean lenientConstructorResolution = true;
 
+	// 构造函数属性值
 	private ConstructorArgumentValues constructorArgumentValues;
 
+	// 属性集合
 	private MutablePropertyValues propertyValues;
 
+	// 方法覆盖集合 lookup-method, replaced-method修饰的重写方法集合
 	private MethodOverrides methodOverrides = new MethodOverrides();
 
+	// 工厂BeanName
 	private String factoryBeanName;
 
+	// 工厂方法名
 	private String factoryMethodName;
 
+	// 初始化方法
 	private String initMethodName;
 
+	// 销毁方法
 	private String destroyMethodName;
 
+	// 是否执行init-method
 	private boolean enforceInitMethod = true;
 
+	// 是否执行destroy-method
 	private boolean enforceDestroyMethod = true;
 
+	// 是否是自动生成的类Aop代理类为true
 	private boolean synthetic = false;
 
+	//
 	private int role = BeanDefinition.ROLE_APPLICATION;
 
+	// 描述
 	private String description;
 
+	// 所属的配置文件
 	private Resource resource;
 
 
