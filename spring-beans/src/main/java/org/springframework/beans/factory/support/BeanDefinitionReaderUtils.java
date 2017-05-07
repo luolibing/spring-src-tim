@@ -56,6 +56,7 @@ public class BeanDefinitionReaderUtils {
 	public static AbstractBeanDefinition createBeanDefinition(
 			String parentName, String className, ClassLoader classLoader) throws ClassNotFoundException {
 
+		// Spring2.5之后直接使用GenericBeanDefinition作为BeanDefinition的直接选择。
 		GenericBeanDefinition bd = new GenericBeanDefinition();
 		bd.setParentName(parentName);
 		if (className != null) {
@@ -143,12 +144,13 @@ public class BeanDefinitionReaderUtils {
 			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
 			throws BeanDefinitionStoreException {
 
-		// Register bean definition under primary name.
+		// 1 将BeanName作为唯一标识符，注册到BeanRegistry当中，Register bean definition under primary name
 		String beanName = definitionHolder.getBeanName();
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
 		String[] aliases = definitionHolder.getAliases();
+		// 2 如果有别名，注册所有的别名
 		if (aliases != null) {
 			for (String aliase : aliases) {
 				registry.registerAlias(beanName, aliase);

@@ -57,7 +57,9 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
 
 	@Override
 	public final BeanDefinition parse(Element element, ParserContext parserContext) {
+		// 解析出抽象AbstractBeanDefinition
 		AbstractBeanDefinition definition = parseInternal(element, parserContext);
+		// 不是被包含嵌套的，并且解析出的BeanDefinition不为空，需要进行注册，否则已经注册过的不需要再次注册
 		if (definition != null && !parserContext.isNested()) {
 			try {
 				String id = resolveId(element, definition, parserContext);

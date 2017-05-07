@@ -16,15 +16,15 @@
 
 package org.springframework.core.io.support;
 
+import org.springframework.core.io.Resource;
+import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-
-import org.springframework.core.io.Resource;
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Holder that combines a {@link org.springframework.core.io.Resource}
@@ -116,6 +116,7 @@ public class EncodedResource {
 	}
 
 	/**
+	 * 如果EncodedResource设置了字符集或者编码格式，则返回对应字符集编码格式的InputStreamResource
 	 * Open a {@code java.io.Reader} for the specified resource,
 	 * using the specified encoding (if any).
 	 * @throws IOException if opening the Reader failed

@@ -799,6 +799,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
+				 // 验证BeanDefinition当中override指定的工厂方法是否存在或者并存
 				((AbstractBeanDefinition) beanDefinition).validate();
 			}
 			catch (BeanDefinitionValidationException ex) {
@@ -808,14 +809,17 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		BeanDefinition oldBeanDefinition;
-
+		// 老版本在这个地方使用的是synchronized()代码块，而新老板中，这个地方使用了ConcurrentHashMap
 		oldBeanDefinition = this.beanDefinitionMap.get(beanName);
+		// 判断是否已经注册过，如果已经注册过，又分以下几种情况
 		if (oldBeanDefinition != null) {
+			// 1、不允许覆盖，则抛出异常
 			if (!this.allowBeanDefinitionOverriding) {
 				throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
 						"Cannot register bean definition [" + beanDefinition + "] for bean '" + beanName +
 						"': There is already [" + oldBeanDefinition + "] bound.");
 			}
+			// 允许覆盖，则判断哪个role大
 			else if (oldBeanDefinition.getRole() < beanDefinition.getRole()) {
 				// e.g. was ROLE_APPLICATION, now overriding with ROLE_SUPPORT or ROLE_INFRASTRUCTURE
 				if (this.logger.isWarnEnabled()) {
@@ -832,12 +836,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 		else {
+			// 将BeanNames加入到beanDefinitionNames集合当中，以及从手动的单例对象集合中删除
 			this.beanDefinitionNames.add(beanName);
 			this.manualSingletonNames.remove(beanName);
 			this.frozenBeanDefinitionNames = null;
 		}
+		// 将BeanDefinition加入到Map当中。
 		this.beanDefinitionMap.put(beanName, beanDefinition);
 
+		// 清除解析阶段保留下的BeanDefinition缓存
 		if (oldBeanDefinition != null || containsSingleton(beanName)) {
 			resetBeanDefinition(beanName);
 		}

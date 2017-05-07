@@ -58,6 +58,7 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 	 */
 	@Override
 	protected final AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+		// 此处使用Builder模式，先创建出标准的Builder，然后根据属性，设置Bean都拥有的一些属性
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition();
 		String parentName = getParentName(element);
 		if (parentName != null) {
@@ -82,6 +83,7 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 			// Default-lazy-init applies to custom bean definitions as well.
 			builder.setLazyInit(true);
 		}
+		// 接下来调用用户自定义的解析函数，用于解析自定义的一些属性值了。 propertyValues属性设置
 		doParse(element, parserContext, builder);
 		return builder.getBeanDefinition();
 	}
