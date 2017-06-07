@@ -16,13 +16,6 @@
 
 package org.springframework.context.event;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -33,6 +26,9 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.OrderComparator;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract implementation of the {@link ApplicationEventMulticaster} interface,
@@ -56,8 +52,10 @@ import org.springframework.util.ObjectUtils;
 public abstract class AbstractApplicationEventMulticaster
 		implements ApplicationEventMulticaster, BeanClassLoaderAware, BeanFactoryAware {
 
+	// 存放了所有的listener
 	private final ListenerRetriever defaultRetriever = new ListenerRetriever(false);
 
+	// 辅助
 	private final Map<ListenerCacheKey, ListenerRetriever> retrieverCache =
 			new ConcurrentHashMap<ListenerCacheKey, ListenerRetriever>(64);
 
