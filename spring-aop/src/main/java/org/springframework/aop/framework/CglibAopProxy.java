@@ -185,6 +185,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			}
 			enhancer.setSuperclass(proxySuperClass);
 			enhancer.setInterfaces(AopProxyUtils.completeProxiedInterfaces(this.advised));
+			// 命名策略
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setStrategy(new UndeclaredThrowableStrategy(UndeclaredThrowableException.class));
 
@@ -276,6 +277,12 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 	}
 
+	/**
+	 * 获取所有的回调链
+	 * @param rootClass
+	 * @return
+	 * @throws Exception
+	 */
 	private Callback[] getCallbacks(Class<?> rootClass) throws Exception {
 		// Parameters used for optimisation choices...
 		boolean exposeProxy = this.advised.isExposeProxy();
@@ -304,6 +311,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 		Callback targetDispatcher = isStatic ?
 				new StaticDispatcher(this.advised.getTargetSource().getTarget()) : new SerializableNoOp();
 
+		// 构建回调数组，将aop拦截器放在最前面
 		Callback[] mainCallbacks = new Callback[]{
 			aopInterceptor, // for normal advice
 			targetInterceptor, // invoke target without considering advice, if optimized
@@ -646,10 +654,12 @@ class CglibAopProxy implements AopProxy, Serializable {
 					// Note that the final invoker must be an InvokerInterceptor, so we know
 					// it does nothing but a reflective operation on the target, and no hot
 					// swapping or fancy proxying.
+					// 如果链已经为空，则直接执行原方法
 					retVal = methodProxy.invoke(target, args);
 				}
 				else {
 					// We need to create a method invocation...
+					// 否则进入链，执行链
 					retVal = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy).proceed();
 				}
 				retVal = processReturnType(proxy, target, method, retVal);
