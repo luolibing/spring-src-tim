@@ -16,11 +16,8 @@
 
 package org.springframework.context.weaving;
 
-import java.lang.instrument.ClassFileTransformer;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.instrument.InstrumentationSavingAgent;
@@ -32,6 +29,8 @@ import org.springframework.instrument.classloading.jboss.JBossLoadTimeWeaver;
 import org.springframework.instrument.classloading.tomcat.TomcatLoadTimeWeaver;
 import org.springframework.instrument.classloading.weblogic.WebLogicLoadTimeWeaver;
 import org.springframework.instrument.classloading.websphere.WebSphereLoadTimeWeaver;
+
+import java.lang.instrument.ClassFileTransformer;
 
 /**
  * Default {@link LoadTimeWeaver} bean for use in an application context,
@@ -78,6 +77,7 @@ public class DefaultContextLoadTimeWeaver implements LoadTimeWeaver, BeanClassLo
 			this.loadTimeWeaver = serverSpecificLoadTimeWeaver;
 		}
 		else if (InstrumentationLoadTimeWeaver.isInstrumentationAvailable()) {
+			// 检查当前虚拟机中的Instrumentation实例是否可用
 			logger.info("Found Spring's JVM agent for instrumentation");
 			this.loadTimeWeaver = new InstrumentationLoadTimeWeaver(classLoader);
 		}

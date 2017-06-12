@@ -31,6 +31,7 @@ import org.springframework.util.ClassUtils;
 /**
  * Parser for the &lt;context:load-time-weaver/&gt; element.
  *
+ * 静态织入支持
  * @author Juergen Hoeller
  * @since 2.5
  */
@@ -66,6 +67,7 @@ class LoadTimeWeaverBeanDefinitionParser extends AbstractSingleBeanDefinitionPar
 
 		if (isAspectJWeavingEnabled(element.getAttribute(ASPECTJ_WEAVING_ATTRIBUTE), parserContext)) {
 			RootBeanDefinition weavingEnablerDef = new RootBeanDefinition();
+			// 设置织入的类org.springframework.context.weaving.AspectJWeavingEnabler
 			weavingEnablerDef.setBeanClassName(ASPECTJ_WEAVING_ENABLER_CLASS_NAME);
 			parserContext.getReaderContext().registerWithGeneratedName(weavingEnablerDef);
 
