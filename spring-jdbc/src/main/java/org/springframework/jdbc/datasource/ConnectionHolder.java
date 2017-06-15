@@ -188,6 +188,7 @@ public class ConnectionHolder extends ResourceHolderSupport {
 	 */
 	@Override
 	public void released() {
+		// 调用父类的计数器--
 		super.released();
 		if (!isOpen() && this.currentConnection != null) {
 			this.connectionHandle.releaseConnection(this.currentConnection);

@@ -16,27 +16,6 @@
 
 package org.springframework.jdbc.core;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.sql.BatchUpdateException;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import javax.sql.DataSource;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.support.DataAccessUtils;
@@ -51,6 +30,14 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.StringUtils;
+
+import javax.sql.DataSource;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.sql.*;
+import java.util.*;
 
 /**
  * <b>This is the central class in the JDBC core package.</b>
@@ -396,6 +383,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 					this.nativeJdbcExtractor.isNativeConnectionNecessaryForNativeStatements()) {
 				conToUse = this.nativeJdbcExtractor.getNativeConnection(con);
 			}
+			// 没有参数的直接使用statement, 有参数的使用PreparedStatement
 			stmt = conToUse.createStatement();
 			applyStatementSettings(stmt);
 			Statement stmtToUse = stmt;
@@ -417,6 +405,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		}
 		finally {
 			JdbcUtils.closeStatement(stmt);
+			// release连接，有可能只是计数器-1
 			DataSourceUtils.releaseConnection(con, getDataSource());
 		}
 	}
@@ -615,7 +604,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	//-------------------------------------------------------------------------
 	// Methods dealing with prepared statements
 	//-------------------------------------------------------------------------
-
+	// TODO
 	@Override
 	public <T> T execute(PreparedStatementCreator psc, PreparedStatementCallback<T> action)
 			throws DataAccessException {
@@ -627,6 +616,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			logger.debug("Executing prepared SQL statement" + (sql != null ? " [" + sql + "]" : ""));
 		}
 
+		// 获取数据库连接
 		Connection con = DataSourceUtils.getConnection(getDataSource());
 		PreparedStatement ps = null;
 		try {
@@ -636,12 +626,16 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 				conToUse = this.nativeJdbcExtractor.getNativeConnection(con);
 			}
 			ps = psc.createPreparedStatement(conToUse);
+			// 应用用户设置的参数，例如最大获取行数，超时时间，row列数
 			applyStatementSettings(ps);
 			PreparedStatement psToUse = ps;
 			if (this.nativeJdbcExtractor != null) {
 				psToUse = this.nativeJdbcExtractor.getNativePreparedStatement(ps);
 			}
+
+			// 执行对应的操作，得到结果
 			T result = action.doInPreparedStatement(psToUse);
+			// 处理警告
 			handleWarnings(ps);
 			return result;
 		}
@@ -660,6 +654,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			throw getExceptionTranslator().translate("PreparedStatementCallback", sql, ex);
 		}
 		finally {
+			// 最后还得释放资源
 			if (psc instanceof ParameterDisposer) {
 				((ParameterDisposer) psc).cleanupParameters();
 			}
@@ -695,16 +690,23 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return execute(psc, new PreparedStatementCallback<T>() {
 			@Override
 			public T doInPreparedStatement(PreparedStatement ps) throws SQLException {
+				// 结构与update方法类似
 				ResultSet rs = null;
 				try {
 					if (pss != null) {
 						pss.setValues(ps);
 					}
+					/**
+					 * 执行查询, PreparedStatement与Statement的区别：
+					 * PreparedStatement实例包含已编译的SQL语句，SQL会事先预编译，执行速度会比Statement快一些，尤其是多次执行一样的sql只是参数不一样的时候。
+					 *
+					 */
 					rs = ps.executeQuery();
 					ResultSet rsToUse = rs;
 					if (nativeJdbcExtractor != null) {
 						rsToUse = nativeJdbcExtractor.getNativeResultSet(rs);
 					}
+					// 抽取结果，其实都是使用的RowMapper，例如queryForObject, queryForMap，都是创建了一个MapRowMapper，或者ObjectRowMapper而已
 					return rse.extractData(rsToUse);
 				}
 				finally {
@@ -902,6 +904,13 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return query(sql, args, new SqlRowSetResultSetExtractor());
 	}
 
+	/**
+	 *
+	 * @param psc sql
+	 * @param pss 参数
+	 * @return
+	 * @throws DataAccessException
+	 */
 	protected int update(final PreparedStatementCreator psc, final PreparedStatementSetter pss)
 			throws DataAccessException {
 
@@ -911,6 +920,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			public Integer doInPreparedStatement(PreparedStatement ps) throws SQLException {
 				try {
 					if (pss != null) {
+						// 设置参数，将所有的参数封装起来
 						pss.setValues(ps);
 					}
 					int rows = ps.executeUpdate();
@@ -1388,6 +1398,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @see org.springframework.jdbc.datasource.DataSourceUtils#applyTransactionTimeout
 	 */
 	protected void applyStatementSettings(Statement stmt) throws SQLException {
+		// 每次从数据库fetch多少条数据放入到数据库当中，避免调用rx.next()的时候再次请求数据库
 		int fetchSize = getFetchSize();
 		if (fetchSize >= 0) {
 			stmt.setFetchSize(fetchSize);

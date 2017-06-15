@@ -16,12 +16,12 @@
 
 package org.springframework.jdbc.core;
 
+import org.springframework.util.Assert;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.util.Assert;
 
 /**
  * Adapter implementation of the ResultSetExtractor interface that delegates
@@ -85,6 +85,7 @@ public class RowMapperResultSetExtractor<T> implements ResultSetExtractor<List<T
 	}
 
 
+	// 遇上使用RowMapper的时候，直接调用用户自定义的RowMapper，将rs转换成pojo
 	@Override
 	public List<T> extractData(ResultSet rs) throws SQLException {
 		List<T> results = (this.rowsExpected > 0 ? new ArrayList<T>(this.rowsExpected) : new ArrayList<T>());

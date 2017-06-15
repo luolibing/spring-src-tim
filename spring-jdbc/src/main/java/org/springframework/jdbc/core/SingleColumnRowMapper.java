@@ -16,14 +16,14 @@
 
 package org.springframework.jdbc.core;
 
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-
 import org.springframework.dao.TypeMismatchDataAccessException;
 import org.springframework.jdbc.IncorrectResultSetColumnCountException;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.NumberUtils;
+
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 
 /**
  * {@link RowMapper} implementation that converts a single column into a single
@@ -84,11 +84,13 @@ public class SingleColumnRowMapper<T> implements RowMapper<T> {
 		// Validate column count.
 		ResultSetMetaData rsmd = rs.getMetaData();
 		int nrOfColumns = rsmd.getColumnCount();
+		// 验证返回的结果是否只有一个
 		if (nrOfColumns != 1) {
 			throw new IncorrectResultSetColumnCountException(1, nrOfColumns);
 		}
 
 		// Extract column value from JDBC ResultSet.
+		// 抽取对应的结果
 		Object result = getColumnValue(rs, 1, this.requiredType);
 		if (result != null && this.requiredType != null && !this.requiredType.isInstance(result)) {
 			// Extracted value does not match already: try to convert it.
