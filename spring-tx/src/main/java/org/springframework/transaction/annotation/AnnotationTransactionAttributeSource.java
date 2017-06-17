@@ -16,17 +16,17 @@
 
 package org.springframework.transaction.annotation;
 
+import org.springframework.transaction.interceptor.AbstractFallbackTransactionAttributeSource;
+import org.springframework.transaction.interceptor.TransactionAttribute;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+
 import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import org.springframework.transaction.interceptor.AbstractFallbackTransactionAttributeSource;
-import org.springframework.transaction.interceptor.TransactionAttribute;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 /**
  * Implementation of the
@@ -150,6 +150,7 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	 * or {@code null} if none was found
 	 */
 	protected TransactionAttribute determineTransactionAttribute(AnnotatedElement ae) {
+		// 事务注解解析器，逐个解析, 有可能是使用spring事务，或者javax事务，或者ejb
 		for (TransactionAnnotationParser annotationParser : this.annotationParsers) {
 			TransactionAttribute attr = annotationParser.parseTransactionAnnotation(ae);
 			if (attr != null) {

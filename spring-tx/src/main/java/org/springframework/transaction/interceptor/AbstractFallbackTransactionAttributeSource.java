@@ -16,17 +16,16 @@
 
 package org.springframework.transaction.interceptor;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.core.BridgeMethodResolver;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.core.BridgeMethodResolver;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Abstract implementation of {@link TransactionAttributeSource} that caches
@@ -97,6 +96,7 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		}
 		else {
 			// We need to work it out.
+			// 获取到事务属性，（事务注解）
 			TransactionAttribute txAtt = computeTransactionAttribute(method, targetClass);
 			// Put it in the cache.
 			if (txAtt == null) {
@@ -141,29 +141,35 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		Class<?> userClass = ClassUtils.getUserClass(targetClass);
 		// The method may be on an interface, but we need attributes from the target class.
 		// If the target class is null, the method will be unchanged.
+		// method代表接口中的方法， specificMethod代表实现类中的方法
 		Method specificMethod = ClassUtils.getMostSpecificMethod(method, userClass);
 		// If we are dealing with method with generic parameters, find the original method.
 		specificMethod = BridgeMethodResolver.findBridgedMethod(specificMethod);
 
 		// First try is the method in the target class.
+		// 1 查看方法上是否声明事务注解
 		TransactionAttribute txAtt = findTransactionAttribute(specificMethod);
 		if (txAtt != null) {
 			return txAtt;
 		}
 
 		// Second try is the transaction attribute on the target class.
+		// 2 查看类上是否声明事务注解
 		txAtt = findTransactionAttribute(specificMethod.getDeclaringClass());
 		if (txAtt != null) {
 			return txAtt;
 		}
 
+		// 3 如果存在接口
 		if (specificMethod != method) {
 			// Fallback is to look at the original method.
+			// 3.1 接口上的类方法
 			txAtt = findTransactionAttribute(method);
 			if (txAtt != null) {
 				return txAtt;
 			}
 			// Last fallback is the class of the original method.
+			// 3.2 接口上查找注解
 			return findTransactionAttribute(method.getDeclaringClass());
 		}
 		return null;
