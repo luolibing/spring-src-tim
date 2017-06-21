@@ -315,10 +315,11 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 		// Remove the connection holder from the thread, if exposed.
 		if (txObject.isNewConnectionHolder()) {
+			// 将当前线程与数据库连接解绑
 			TransactionSynchronizationManager.unbindResource(this.dataSource);
 		}
 
-		// Reset connection.
+		// Reset connection. 重置连接
 		Connection con = txObject.getConnectionHolder().getConnection();
 		try {
 			if (txObject.isMustRestoreAutoCommit()) {

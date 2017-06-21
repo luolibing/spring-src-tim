@@ -469,6 +469,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	protected TransactionInfo prepareTransactionInfo(PlatformTransactionManager tm,
 			TransactionAttribute txAttr, String joinpointIdentification, TransactionStatus status) {
 
+		// 包含了所有状态信息，一旦失误执行失败，状态信息错误信息都会放入到这个里面，然后进行回滚
 		TransactionInfo txInfo = new TransactionInfo(tm, txAttr, joinpointIdentification);
 		if (txAttr != null) {
 			// We need a transaction for this method
@@ -476,6 +477,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				logger.trace("Getting transaction for [" + txInfo.getJoinpointIdentification() + "]");
 			}
 			// The transaction manager will flag an error if an incompatible tx already exists
+			// 记录事务状态
 			txInfo.newTransactionStatus(status);
 		}
 		else {
@@ -520,9 +522,11 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() +
 						"] after exception: " + ex);
 			}
+
+			// 抛出的异常是否是RuntimeException或者Error的类型
 			if (txInfo.transactionAttribute.rollbackOn(ex)) {
 				try {
-					// 指定对应的rollback方法
+					// 根据transactionStatus进行回滚，因为transactionStatus里面包含了所有回滚相关的信息
 					txInfo.getTransactionManager().rollback(txInfo.getTransactionStatus());
 				}
 				catch (TransactionSystemException ex2) {
@@ -543,6 +547,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				// We don't roll back on this exception.
 				// Will still roll back if TransactionStatus.isRollbackOnly() is true.
 				try {
+					// 如果不是回滚条件，抛出异常同样会提交，这个地方还是使用的transactionStatus
 					txInfo.getTransactionManager().commit(txInfo.getTransactionStatus());
 				}
 				catch (TransactionSystemException ex2) {
