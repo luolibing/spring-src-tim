@@ -16,10 +16,6 @@
 
 package org.springframework.jdbc.datasource;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionDefinition;
@@ -28,6 +24,10 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.ResourceTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * {@link org.springframework.transaction.PlatformTransactionManager}
@@ -177,7 +177,9 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 	@Override
 	protected Object doGetTransaction() {
 		DataSourceTransactionObject txObject = new DataSourceTransactionObject();
+		// 是否允许嵌入事务
 		txObject.setSavepointAllowed(isNestedTransactionAllowed());
+		// 如果当前线程存在数据库连接，则使用原有连接
 		ConnectionHolder conHolder =
 				(ConnectionHolder) TransactionSynchronizationManager.getResource(this.dataSource);
 		txObject.setConnectionHolder(conHolder, false);
@@ -192,6 +194,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 	/**
 	 * This implementation sets the isolation level but ignores the timeout.
+	 * 实现设置隔离级别
 	 */
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
@@ -199,6 +202,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 		Connection con = null;
 
 		try {
+			// 如果当前线程没有连接，需要创建出新的连接
 			if (txObject.getConnectionHolder() == null ||
 					txObject.getConnectionHolder().isSynchronizedWithTransaction()) {
 				Connection newCon = this.dataSource.getConnection();
@@ -211,12 +215,14 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			txObject.getConnectionHolder().setSynchronizedWithTransaction(true);
 			con = txObject.getConnectionHolder().getConnection();
 
+			// 设置隔离级别
 			Integer previousIsolationLevel = DataSourceUtils.prepareConnectionForTransaction(con, definition);
 			txObject.setPreviousIsolationLevel(previousIsolationLevel);
 
 			// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
 			// so we don't want to do it unnecessarily (for example if we've explicitly
 			// configured the connection pool to set it already).
+			// 更改自动提交方式，交由spring控制
 			if (con.getAutoCommit()) {
 				txObject.setMustRestoreAutoCommit(true);
 				if (logger.isDebugEnabled()) {
@@ -224,6 +230,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 				}
 				con.setAutoCommit(false);
 			}
+			// 设置判断当前线程是否存在事务的依据
 			txObject.getConnectionHolder().setTransactionActive(true);
 
 			int timeout = determineTimeout(definition);
@@ -233,6 +240,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 			// Bind the session holder to the thread.
 			if (txObject.isNewConnectionHolder()) {
+				// 将当前获取到的连接绑定到当前线程
 				TransactionSynchronizationManager.bindResource(getDataSource(), txObject.getConnectionHolder());
 			}
 		}

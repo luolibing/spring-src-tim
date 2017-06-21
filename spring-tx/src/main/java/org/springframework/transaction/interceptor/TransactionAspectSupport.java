@@ -431,6 +431,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			PlatformTransactionManager tm, TransactionAttribute txAttr, final String joinpointIdentification) {
 
 		// If no name specified, apply method identification as transaction name.
+		// 如果没有名称指定则使用方法唯一标识,并使用DelegatingTransactionAttribute
 		if (txAttr != null && txAttr.getName() == null) {
 			txAttr = new DelegatingTransactionAttribute(txAttr) {
 				@Override
@@ -443,6 +444,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionStatus status = null;
 		if (txAttr != null) {
 			if (tm != null) {
+				// 获取TransactionStatus
 				status = tm.getTransaction(txAttr);
 			}
 			else {
@@ -452,6 +454,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				}
 			}
 		}
+		// 根据指定的属性与status准备一个TransactionInfo
 		return prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);
 	}
 
