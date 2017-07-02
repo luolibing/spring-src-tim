@@ -16,12 +16,12 @@
 
 package org.springframework.web.servlet.mvc;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Adapter to use the plain {@link org.springframework.web.HttpRequestHandler}
@@ -39,6 +39,11 @@ import org.springframework.web.servlet.ModelAndView;
  */
 public class HttpRequestHandlerAdapter implements HandlerAdapter {
 
+	/**
+	 * 仅支持Http请求处理器的适配
+	 * @param handler handler object to check
+	 * @return
+	 */
 	@Override
 	public boolean supports(Object handler) {
 		return (handler instanceof HttpRequestHandler);
@@ -48,6 +53,7 @@ public class HttpRequestHandlerAdapter implements HandlerAdapter {
 	public ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 
+		// 无返回值， 主要应用于基于http的远程调用的实现上。
 		((HttpRequestHandler) handler).handleRequest(request, response);
 		return null;
 	}
