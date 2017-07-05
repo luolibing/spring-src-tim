@@ -16,11 +16,6 @@
 
 package org.springframework.web.servlet.handler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.core.Ordered;
@@ -33,6 +28,11 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.util.UrlPathHelper;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Abstract base class for {@link org.springframework.web.servlet.HandlerMapping}
@@ -296,18 +296,25 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 */
 	@Override
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		// 根据request获取handler
 		Object handler = getHandlerInternal(request);
+		// 如果没有则使用默认的Handler
 		if (handler == null) {
 			handler = getDefaultHandler();
 		}
+
+		// 默认的也没有，则返回null
 		if (handler == null) {
 			return null;
 		}
+
 		// Bean name or resolved handler?
+		// 如果handler是一个string， 则到applicationContext中找出这个Bean
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
 			handler = getApplicationContext().getBean(handlerName);
 		}
+		// 加入了interceptor，对其方法进行了增强
 		return getHandlerExecutionChain(handler, request);
 	}
 

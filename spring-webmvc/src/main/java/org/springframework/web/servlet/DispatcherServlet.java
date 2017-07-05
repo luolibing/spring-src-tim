@@ -936,8 +936,10 @@ public class DispatcherServlet extends FrameworkServlet {
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
 				// Process last-modified header, if supported by the handler.
+				// 开启对lastModified的支持
 				String method = request.getMethod();
 				boolean isGet = "GET".equals(method);
+				// 只有get和head方法支持lastModified
 				if (isGet || "HEAD".equals(method)) {
 					long lastModified = ha.getLastModified(request, mappedHandler.getHandler());
 					if (logger.isDebugEnabled()) {
@@ -948,26 +950,33 @@ public class DispatcherServlet extends FrameworkServlet {
 					}
 				}
 
+				// 拦截器的预处理，如果有不通过的，直接返回
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
 					return;
 				}
 
 				// Actually invoke the handler.
+				// 真正的调用
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
+				// 异步的request不需要返回
 				if (asyncManager.isConcurrentHandlingStarted()) {
 					return;
 				}
 
+				// 默认视图处理
 				applyDefaultViewName(request, mv);
+				// 后处理
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
 			catch (Exception ex) {
 				dispatchException = ex;
 			}
+			// 最后结果的处理
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		}
 		catch (Exception ex) {
+			// 完成处理激活触发器，也是调用Interceptor列表的afterCompletion
 			triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
 		}
 		catch (Error err) {
@@ -976,12 +985,14 @@ public class DispatcherServlet extends FrameworkServlet {
 		finally {
 			if (asyncManager.isConcurrentHandlingStarted()) {
 				// Instead of postHandle and afterCompletion
+				// 调用异步拦截器的后处理
 				if (mappedHandler != null) {
 					mappedHandler.applyAfterConcurrentHandlingStarted(processedRequest, response);
 				}
 			}
 			else {
 				// Clean up any resources used by a multipart request.
+				// 删除掉multipart请求的所有资源
 				if (multipartRequestParsed) {
 					cleanupMultipart(processedRequest);
 				}
@@ -1007,6 +1018,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		boolean errorView = false;
 
+		// 异常处理
 		if (exception != null) {
 			if (exception instanceof ModelAndViewDefiningException) {
 				logger.debug("ModelAndViewDefiningException encountered", exception);
@@ -1020,9 +1032,11 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		// Did the handler return a view to render?
+		// 视图不为空，渲染
 		if (mv != null && !mv.wasCleared()) {
 			render(mv, request, response);
 			if (errorView) {
+				// 有渲染视图，将request里面的错误信息全部清空？
 				WebUtils.clearErrorRequestAttributes(request);
 			}
 		}
@@ -1038,6 +1052,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			return;
 		}
 
+		// 完成处理激活触发器，其实是调用Interceptor列表的afterCompletion
 		if (mappedHandler != null) {
 			mappedHandler.triggerAfterCompletion(request, response, null);
 		}
@@ -1066,6 +1081,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 判断请求头中是否有multipart，如果有，则继续将其中的HttpEntity数组封装到multipartRequest当中
 	 * Convert the request into a multipart request, and make multipart resolver available.
 	 * <p>If no multipart resolver is set, simply use the existing request.
 	 * @param request current HTTP request
@@ -1109,6 +1125,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @return the HandlerExecutionChain, or {@code null} if no handler could be found
 	 */
 	protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		// 找到第一个能处理的HandlerMapping
 		for (HandlerMapping hm : this.handlerMappings) {
 			if (logger.isTraceEnabled()) {
 				logger.trace(
@@ -1175,6 +1192,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			Object handler, Exception ex) throws Exception {
 
 		// Check registered HandlerExceptionResolvers...
+		// 使用HandlerExceptionResolvers集合，逐个的判断找到第一个适合的异常处理器
 		ModelAndView exMv = null;
 		for (HandlerExceptionResolver handlerExceptionResolver : this.handlerExceptionResolvers) {
 			exMv = handlerExceptionResolver.resolveException(request, response, handler, ex);
@@ -1182,6 +1200,8 @@ public class DispatcherServlet extends FrameworkServlet {
 				break;
 			}
 		}
+
+		// 有异常视图
 		if (exMv != null) {
 			if (exMv.isEmpty()) {
 				request.setAttribute(EXCEPTION_ATTRIBUTE, ex);
