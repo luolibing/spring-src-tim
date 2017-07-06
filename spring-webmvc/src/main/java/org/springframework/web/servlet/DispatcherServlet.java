@@ -932,7 +932,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				// Determine handler adapter for the current request.
-				// 给当前request适配一个HandlerAdapter
+				// 给当前request适配一个HandlerAdapter, RestController使用RequestMappingHandlerAdapter
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
 				// Process last-modified header, if supported by the handler.
@@ -956,7 +956,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				// Actually invoke the handler.
-				// 真正的调用
+				// 真正的调用， 使用适配器进行调用
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				// 异步的request不需要返回
@@ -1170,6 +1170,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Testing handler adapter [" + ha + "]");
 			}
+			// 适配一种能够处理handler的适配器，例如用Controller， Servlet, HttpRequestHandler, AnnotationMethodHandlerAdapter, RequestMappingHandlerAdapter
 			if (ha.supports(handler)) {
 				return ha;
 			}
