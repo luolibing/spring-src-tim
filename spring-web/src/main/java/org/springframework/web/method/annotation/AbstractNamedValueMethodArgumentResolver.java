@@ -16,10 +16,6 @@
 
 package org.springframework.web.method.annotation;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.servlet.ServletException;
-
 import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -31,6 +27,10 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.RequestScope;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+
+import javax.servlet.ServletException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract base class for resolving method arguments from a named value.
@@ -82,9 +82,12 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	public final Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 			NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
 
+		// 获取类型
 		Class<?> paramType = parameter.getParameterType();
+		// 参数的名称类型
 		NamedValueInfo namedValueInfo = getNamedValueInfo(parameter);
 
+		// 解析出名称
 		Object arg = resolveName(namedValueInfo.name, parameter, webRequest);
 		if (arg == null) {
 			if (namedValueInfo.defaultValue != null) {
@@ -99,11 +102,13 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 			arg = resolveDefaultValue(namedValueInfo.defaultValue);
 		}
 
+		// 判断是否有dataBinder绑定
 		if (binderFactory != null) {
 			WebDataBinder binder = binderFactory.createBinder(webRequest, null, namedValueInfo.name);
 			arg = binder.convertIfNecessary(arg, paramType, parameter);
 		}
 
+		// 又是留给子类去实现，空钩子
 		handleResolvedValue(arg, namedValueInfo.name, parameter, mavContainer, webRequest);
 
 		return arg;
@@ -169,6 +174,8 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		if (exprResolver == null) {
 			return defaultValue;
 		}
+
+		// 通过表达式解析对应的名称
 		return exprResolver.evaluate(placeholdersResolved, this.expressionContext);
 	}
 

@@ -16,15 +16,6 @@
 
 package org.springframework.web.method.annotation;
 
-import java.beans.PropertyEditor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.GenericCollectionTypeResolver;
@@ -47,6 +38,15 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.WebUtils;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.beans.PropertyEditor;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Resolves method arguments annotated with @{@link RequestParam}, arguments of
@@ -163,6 +163,9 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 				WebUtils.getNativeRequest(servletRequest, MultipartHttpServletRequest.class);
 		Object arg;
 
+		// 通过request中进行解析，获取到参数
+
+		// 先判断是否是mutipartRequest
 		if (MultipartFile.class.equals(parameter.getParameterType())) {
 			assertIsMultipartRequest(servletRequest);
 			Assert.notNull(multipartRequest, "Expected MultipartHttpServletRequest: is a MultipartResolver configured?");
@@ -200,6 +203,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 				}
 			}
 			if (arg == null) {
+				// 从request中获取对应的值数组
 				String[] paramValues = webRequest.getParameterValues(name);
 				if (paramValues != null) {
 					arg = paramValues.length == 1 ? paramValues[0] : paramValues;

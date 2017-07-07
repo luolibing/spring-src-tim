@@ -16,6 +16,16 @@
 
 package org.springframework.beans;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.core.CollectionFactory;
+import org.springframework.core.MethodParameter;
+import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
+
 import java.beans.PropertyEditor;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -24,17 +34,6 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.core.CollectionFactory;
-import org.springframework.core.MethodParameter;
-import org.springframework.core.convert.ConversionFailedException;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.TypeDescriptor;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * Internal helper class for converting property values to target types.
@@ -161,11 +160,13 @@ class TypeConverterDelegate {
 		Object convertedValue = newValue;
 
 		// Custom editor for this type?
+		// 获取到自定义的editor
 		PropertyEditor editor = this.propertyEditorRegistry.findCustomEditor(requiredType, propertyName);
 
 		ConversionFailedException firstAttemptEx = null;
 
 		// No custom editor but custom ConversionService specified?
+		// 使用自定义的Editor进行转换解析
 		ConversionService conversionService = this.propertyEditorRegistry.getConversionService();
 		if (editor == null && conversionService != null && convertedValue != null && typeDescriptor != null) {
 			TypeDescriptor sourceTypeDesc = TypeDescriptor.forObject(newValue);
