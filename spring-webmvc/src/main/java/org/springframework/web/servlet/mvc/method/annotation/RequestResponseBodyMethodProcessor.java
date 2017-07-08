@@ -16,14 +16,6 @@
 
 package org.springframework.web.servlet.mvc.method.annotation;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PushbackInputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.core.Conventions;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -44,6 +36,14 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * Resolves method arguments annotated with {@code @RequestBody} and handles
@@ -87,6 +87,7 @@ public class RequestResponseBodyMethodProcessor extends AbstractMessageConverter
 
 	@Override
 	public boolean supportsReturnType(MethodParameter returnType) {
+		// 查看结果上面是否有@RequestBody注解
 		return (AnnotationUtils.findAnnotation(returnType.getContainingClass(), ResponseBody.class) != null ||
 				returnType.getMethodAnnotation(ResponseBody.class) != null);
 	}
@@ -192,10 +193,10 @@ public class RequestResponseBodyMethodProcessor extends AbstractMessageConverter
 	public void handleReturnValue(Object returnValue, MethodParameter returnType,
 			ModelAndViewContainer mavContainer, NativeWebRequest webRequest)
 			throws IOException, HttpMediaTypeNotAcceptableException {
-
 		mavContainer.setRequestHandled(true);
 
 		// Try even with null return value. ResponseBodyAdvice could get involved.
+		// 处理结果，试用messageConverters
 		writeWithMessageConverters(returnValue, returnType, webRequest);
 	}
 

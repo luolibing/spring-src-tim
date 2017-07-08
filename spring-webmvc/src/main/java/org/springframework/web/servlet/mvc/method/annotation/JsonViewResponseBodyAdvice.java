@@ -44,6 +44,12 @@ import org.springframework.http.server.ServerHttpResponse;
  */
 public class JsonViewResponseBodyAdvice extends AbstractMappingJacksonResponseBodyAdvice {
 
+	/**
+	 * 支持JsonView
+	 * @param returnType
+	 * @param converterType
+	 * @return
+	 */
 	@Override
 	public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
 		return (super.supports(returnType, converterType) && returnType.getMethodAnnotation(JsonView.class) != null);
@@ -53,6 +59,7 @@ public class JsonViewResponseBodyAdvice extends AbstractMappingJacksonResponseBo
 	protected void beforeBodyWriteInternal(MappingJacksonValue bodyContainer, MediaType contentType,
 			MethodParameter returnType, ServerHttpRequest request, ServerHttpResponse response) {
 
+		// 对RequestBody使用指定的类进行序列化
 		JsonView annotation = returnType.getMethodAnnotation(JsonView.class);
 		Class<?>[] classes = annotation.value();
 		if (classes.length != 1) {

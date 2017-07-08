@@ -16,11 +16,6 @@
 
 package org.springframework.http.converter.json;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.nio.charset.Charset;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,17 +23,17 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
-import org.springframework.http.converter.GenericHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.http.converter.*;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Abstract base class for Jackson based and content type independent
@@ -161,7 +156,10 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractHttpM
 		if (!jackson23Available || !logger.isWarnEnabled()) {
 			return (this.objectMapper.canSerialize(clazz) && canWrite(mediaType));
 		}
+
+		// 异常捕获类
 		AtomicReference<Throwable> causeRef = new AtomicReference<Throwable>();
+		// 查看objectMapper能够序列化对应的返回值
 		if (this.objectMapper.canSerialize(clazz, causeRef) && canWrite(mediaType)) {
 			return true;
 		}

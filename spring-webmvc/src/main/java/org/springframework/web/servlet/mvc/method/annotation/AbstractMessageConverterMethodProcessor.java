@@ -16,15 +16,6 @@
 
 package org.springframework.web.servlet.mvc.method.annotation;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
@@ -38,6 +29,11 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.servlet.HandlerMapping;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Extends {@link AbstractMessageConverterMethodArgumentResolver} with the ability to handle
@@ -116,12 +112,16 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 			ServletServerHttpRequest inputMessage, ServletServerHttpResponse outputMessage)
 			throws IOException, HttpMediaTypeNotAcceptableException {
 
+		// 获取返回值的类型
 		Class<?> returnValueClass = getReturnValueType(returnValue, returnType);
 		HttpServletRequest servletRequest = inputMessage.getServletRequest();
+		// 获取request请求头的Accept头
 		List<MediaType> requestedMediaTypes = getAcceptableMediaTypes(servletRequest);
+		// 获取response头中的content-type
 		List<MediaType> producibleMediaTypes = getProducibleMediaTypes(servletRequest, returnValueClass);
 
 		Set<MediaType> compatibleMediaTypes = new LinkedHashSet<MediaType>();
+		// 将Accept头和content-type一一对应，找出能够匹配的content-type
 		for (MediaType requestedType : requestedMediaTypes) {
 			for (MediaType producibleType : producibleMediaTypes) {
 				if (requestedType.isCompatibleWith(producibleType)) {
@@ -137,10 +137,12 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 		}
 
 		List<MediaType> mediaTypes = new ArrayList<MediaType>(compatibleMediaTypes);
+		// 不同的content-type有不同的优先级，按照优先级进行排序
 		MediaType.sortBySpecificityAndQuality(mediaTypes);
 
 		MediaType selectedMediaType = null;
 		for (MediaType mediaType : mediaTypes) {
+			// 找出实际的类型
 			if (mediaType.isConcrete()) {
 				selectedMediaType = mediaType;
 				break;
@@ -153,8 +155,10 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 
 		if (selectedMediaType != null) {
 			selectedMediaType = selectedMediaType.removeQualityValue();
+			// 查看哪个converter能够处理对应的返回值
 			for (HttpMessageConverter<?> messageConverter : this.messageConverters) {
 				if (messageConverter.canWrite(returnValueClass, selectedMediaType)) {
+					// 使用advice链对结果进行处理, 默认最后是RequestBodyAdvice和ResponseBodyAdvice
 					returnValue = this.adviceChain.invoke(returnValue, returnType, selectedMediaType,
 							(Class<HttpMessageConverter<?>>) messageConverter.getClass(), inputMessage, outputMessage);
 					if (returnValue != null) {
@@ -194,11 +198,13 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 	 */
 	@SuppressWarnings("unchecked")
 	protected List<MediaType> getProducibleMediaTypes(HttpServletRequest request, Class<?> returnValueClass) {
+		// 查看是否有指定response返回的类型，例如试用注解指定produceType等
 		Set<MediaType> mediaTypes = (Set<MediaType>) request.getAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
 		if (!CollectionUtils.isEmpty(mediaTypes)) {
 			return new ArrayList<MediaType>(mediaTypes);
 		}
 		else if (!this.allSupportedMediaTypes.isEmpty()) {
+			// 如果没有，则判断哪些convert能够转换对应的值，然后获取对应的converter能够转换的类型
 			List<MediaType> result = new ArrayList<MediaType>();
 			for (HttpMessageConverter<?> converter : this.messageConverters) {
 				if (converter.canWrite(returnValueClass, null)) {
