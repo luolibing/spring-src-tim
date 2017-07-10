@@ -211,7 +211,10 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractHttpM
 	protected void writeInternal(Object object, HttpOutputMessage outputMessage)
 			throws IOException, HttpMessageNotWritableException {
 
+		// jackson2httpmessageConverter写入方式
+		// 获取编码方式
 		JsonEncoding encoding = getJsonEncoding(outputMessage.getHeaders().getContentType());
+		// 使用jackson的objectMapper创建json生成器
 		JsonGenerator generator = this.objectMapper.getFactory().createGenerator(outputMessage.getBody(), encoding);
 		try {
 			writePrefix(generator, object);

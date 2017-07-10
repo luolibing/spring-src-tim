@@ -16,12 +16,11 @@
 
 package org.springframework.http.converter.json;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.springframework.http.MediaType;
+
+import java.io.IOException;
 
 /**
  * Implementation of {@link org.springframework.http.converter.HttpMessageConverter HttpMessageConverter} that
@@ -90,9 +89,11 @@ public class MappingJackson2HttpMessageConverter extends AbstractJackson2HttpMes
 
 	@Override
 	protected void writePrefix(JsonGenerator generator, Object object) throws IOException {
+		// 查看是否有前缀
 		if (this.jsonPrefix != null) {
 			generator.writeRaw(this.jsonPrefix);
 		}
+		// 是否是jsonp方式， 如果是的话，需要先添加/**/({});
 		String jsonpFunction =
 				(object instanceof MappingJacksonValue ? ((MappingJacksonValue) object).getJsonpFunction() : null);
 		if (jsonpFunction != null) {

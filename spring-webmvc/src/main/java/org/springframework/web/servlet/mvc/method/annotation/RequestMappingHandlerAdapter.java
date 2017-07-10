@@ -754,6 +754,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			return null;
 		}
 
+		// 如果有modelAndView，需要返回对应的值
 		return getModelAndView(mavContainer, modelFactory, webRequest);
 	}
 

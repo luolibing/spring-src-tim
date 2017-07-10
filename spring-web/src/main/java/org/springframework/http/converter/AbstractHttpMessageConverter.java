@@ -16,22 +16,17 @@
 
 package org.springframework.http.converter;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.http.*;
+import org.springframework.util.Assert;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpInputMessage;
-import org.springframework.http.HttpOutputMessage;
-import org.springframework.http.MediaType;
-import org.springframework.http.StreamingHttpOutputMessage;
-import org.springframework.util.Assert;
 
 /**
  * Abstract base class for most {@link HttpMessageConverter} implementations.
@@ -168,8 +163,10 @@ public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConv
 	public final void write(final T t, MediaType contentType, HttpOutputMessage outputMessage)
 			throws IOException, HttpMessageNotWritableException {
 
+		// 写入响应头
 		final HttpHeaders headers = outputMessage.getHeaders();
 		if (headers.getContentType() == null) {
+			// 写入默认的contentType
 			MediaType contentTypeToUse = contentType;
 			if (contentType == null || contentType.isWildcardType() || contentType.isWildcardSubtype()) {
 				contentTypeToUse = getDefaultContentType(t);
@@ -178,6 +175,7 @@ public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConv
 				headers.setContentType(contentTypeToUse);
 			}
 		}
+		// 写入content-length
 		if (headers.getContentLength() == -1) {
 			Long contentLength = getContentLength(t, headers.getContentType());
 			if (contentLength != null) {
@@ -185,6 +183,7 @@ public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConv
 			}
 		}
 
+		// 如果是输出流式，例如文件下载等
 		if (outputMessage instanceof StreamingHttpOutputMessage) {
 			StreamingHttpOutputMessage streamingOutputMessage =
 					(StreamingHttpOutputMessage) outputMessage;

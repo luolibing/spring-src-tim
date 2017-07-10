@@ -1233,10 +1233,12 @@ public class DispatcherServlet extends FrameworkServlet {
 	 */
 	protected void render(ModelAndView mv, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		// Determine locale for request and apply it to the response.
+		// 获取到国际化Locale
 		Locale locale = this.localeResolver.resolveLocale(request);
 		response.setLocale(locale);
 
 		View view;
+		// 返回的是modelAndView引用
 		if (mv.isReference()) {
 			// We need to resolve the view name.
 			view = resolveViewName(mv.getViewName(), mv.getModelInternal(), locale, request);
@@ -1297,6 +1299,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	protected View resolveViewName(String viewName, Map<String, Object> model, Locale locale,
 			HttpServletRequest request) throws Exception {
 
+		// 逐个视图解析器进行解析
 		for (ViewResolver viewResolver : this.viewResolvers) {
 			View view = viewResolver.resolveViewName(viewName, locale);
 			if (view != null) {
